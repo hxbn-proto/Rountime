@@ -24,7 +24,7 @@ class RnTimer {
 
                 running = true
 
-                loop@while (active && rounds.size > 0) {
+                loop@ while (active && rounds.size > 0) {
 
                     do {
                         val activeRound: RnRound = rounds[maxOf(activeRoundIndex, 0)]

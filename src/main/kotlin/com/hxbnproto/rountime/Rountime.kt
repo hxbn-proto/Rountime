@@ -3,11 +3,10 @@ package com.hxbnproto.rountime
 import com.hxbnproto.rountime.gui.RoundScreen
 import com.hxbnproto.rountime.gui.RoundScreenController
 import com.hxbnproto.rountime.gui.Styles
-import com.sun.jndi.toolkit.url.Uri
 import javafx.application.Platform
 import javafx.stage.Stage
-import tornadofx.*
-import java.io.File
+import tornadofx.App
+import tornadofx.launch
 
 class Rountime : App(RoundScreen::class, Styles::class) {
     private val roundScreenController: RoundScreenController by inject()

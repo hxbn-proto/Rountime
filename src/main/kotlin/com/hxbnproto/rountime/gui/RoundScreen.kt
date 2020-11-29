@@ -40,7 +40,7 @@ class RoundScreen : View("RounTime") {
 
     override val root = vbox {
 
-//        todo:
+        //        todo:
 //        addClass(roundScreen)
 
         style {
@@ -122,7 +122,8 @@ class RoundScreen : View("RounTime") {
             }
 
             val loopButton = JFXToggleNode()
-            loopButton.style = "-fx-padding: 10px; -fx-background-color: #e3e3e3; -fx-background-radius: 50%;-jfx-toggle-color: deepskyblue;" // TODO: remake to kotlin-style
+            loopButton.style =
+                "-fx-padding: 10px; -fx-background-color: #e3e3e3; -fx-background-radius: 50%;-jfx-toggle-color: deepskyblue;" // TODO: remake to kotlin-style
             loopButton.maxHeight = width
             loopButton.add(
                 FxIconicsLabel.Builder(FxFontGoogleMaterial.Icons.gmd_loop)

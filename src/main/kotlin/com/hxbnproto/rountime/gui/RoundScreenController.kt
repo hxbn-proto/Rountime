@@ -4,7 +4,7 @@ import com.hxbnproto.rountime.GlobalTimer
 import com.hxbnproto.rountime.RnRound
 import com.hxbnproto.rountime.RnTimer
 import javafx.scene.Node
-import tornadofx.*
+import tornadofx.Controller
 import java.time.Duration
 
 class RoundScreenController : Controller() {
@@ -14,7 +14,7 @@ class RoundScreenController : Controller() {
 
     fun init() {
         globalTimer.onTick = roundScreen::updateGlobalDuration
-        globalTimer.onFinish = {roundScreen.updateGlobalDuration(Duration.ZERO)}
+        globalTimer.onFinish = { roundScreen.updateGlobalDuration(Duration.ZERO) }
     }
 
     fun startTimer(selectedRound: RnRound?) {

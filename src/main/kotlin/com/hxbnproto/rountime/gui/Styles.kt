@@ -1,6 +1,6 @@
 package com.hxbnproto.rountime.gui
 
-import tornadofx.*
+import tornadofx.Stylesheet
 
 class Styles : Stylesheet() {
     /* todo(later): separate styles from elements to this file

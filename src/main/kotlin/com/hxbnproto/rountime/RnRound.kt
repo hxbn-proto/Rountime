@@ -29,7 +29,6 @@ class RnRound {
         }
 
     var duration: Duration = Duration.ZERO
-
         set(newVal) {
             field = newVal
             onChanged?.invoke(this)
