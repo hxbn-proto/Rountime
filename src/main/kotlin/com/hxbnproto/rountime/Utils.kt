@@ -1,6 +1,9 @@
 package com.hxbnproto.rountime
 
+import javafx.scene.paint.Color
+import tornadofx.c
 import java.time.Duration
+
 
 fun formatDuration(duration: Duration): String {
     return String.format(
@@ -27,3 +30,8 @@ fun parseDuration(text: String): Duration {
 
     return resultDuration
 }
+
+fun calculateContrastColor(backgroundColor: Color): Color {
+    return if (backgroundColor.brightness > 0.6) c("#252525") else c("#e1e2e2")
+}
+

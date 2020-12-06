@@ -2,61 +2,63 @@ package com.hxbnproto.rountime.gui
 
 import com.hxbnproto.rountime.GlobalTimer
 import com.hxbnproto.rountime.RnRound
-import com.hxbnproto.rountime.RnTimer
-import javafx.scene.Node
+import com.hxbnproto.rountime.TimerHandler
 import tornadofx.Controller
 import java.time.Duration
 
 class RoundScreenController : Controller() {
     private val roundScreen: RoundScreen by inject()
-    private val roundTimer: RnTimer = RnTimer()
-    private val globalTimer: GlobalTimer = GlobalTimer()
+    private val timerHandler = TimerHandler()
+    private val globalTimer = GlobalTimer()
 
     fun init() {
         globalTimer.onTick = roundScreen::updateGlobalDuration
         globalTimer.onFinish = { roundScreen.updateGlobalDuration(Duration.ZERO) }
     }
 
-    fun startTimer(selectedRound: RnRound?) {
-        if (selectedRound != null) {
-            roundTimer.runFrom(selectedRound)
+    fun startTimer() {
+
+        if (!timerHandler.isActive && timerHandler.activeRound == null) {
+            roundScreen.getSelectedRound()?.let { timerHandler.nextRun(it) }
         }
-        roundTimer.startTimer()
+        timerHandler.startTimer()
+
         globalTimer.startTimer()
     }
 
-    fun print(round: RnRound) {
-        if (!roundTimer.active) {
-            roundScreen.timerDisplay.print(round)
+    fun show(round: RnRound?) {
+        if (round != null) {
+            if (!timerHandler.isActive && round == roundScreen.getSelectedRound() || round == timerHandler.activeRound) {
+                roundScreen.timerDisplay.show(round)
+            }
+        } else {
+            roundScreen.timerDisplay.reset()
         }
     }
 
     fun stopTimer() {
         roundScreen.timerDisplay.reset()
-        roundTimer.stopTimer()
+        timerHandler.stopTimer()
         globalTimer.stopTimer()
     }
 
     fun addRound() {
 
         val round = RnRound()
-        round.description = "Round #${roundTimer.rounds.size}"
-        round.onChanged = roundScreen.timerDisplay::roundUpdated
-        round.onStart = { (roundScreen.timerDisplay::setLocked)(true) }
-        round.onTick = roundScreen.timerDisplay::roundTicked
-        round.onFinish = { (roundScreen.timerDisplay::setLocked)(false) }
+        round.description = "Round #${timerHandler.roundsCount()}"
+        round.onChanged = this::show
+        round.onTick = this::show
 
         val roundElement = roundScreen.constructElementForRound(round)
 
-        roundTimer.rounds.add(round)
+        timerHandler.addRound(round)
         roundScreen.addRoundElement(roundElement)
-
     }
 
     fun duplicateRound(round: RnRound) {
 
         val duplicated = round.clone()
-        val insertingIndex: Int = roundTimer.rounds.indexOf(round) + 1
+        val insertingIndex: Int = timerHandler.indexOfRound(round) + 1
 
         duplicated.description = "Round #${insertingIndex}"
 
@@ -64,43 +66,41 @@ class RoundScreenController : Controller() {
 
         roundScreen.insertRoundElement(insertingIndex, roundElement)
 
-
-        roundTimer.rounds.add(insertingIndex, duplicated)
+        timerHandler.addRoundOnIndex(insertingIndex, duplicated)
     }
 
-    fun deleteRound(roundElement: Node, round: RnRound) {
+    fun deleteRound(round: RnRound) {
 
-        roundScreen.deleteRoundElement(roundElement)
+        roundScreen.deleteRoundElement(round.element!!)
 
-        roundTimer.skipIfRunning(round)
-        roundTimer.rounds.remove(round)
+        timerHandler.skipIfRunning(round)
+        timerHandler.removeRound(round)
 
-        if (roundTimer.rounds.size == 0) {
-            roundScreen.timerDisplay.reset()
-        }
+        show(timerHandler.activeRound)
+
     }
 
     fun deleteAllRounds() {
         stopTimer()
-        roundScreen.timerDisplay.reset()
         roundScreen.deleteAllRoundElements()
 
-        roundTimer.rounds.clear()
+        timerHandler.removeAll()
+        roundScreen.timerDisplay.reset()
     }
 
     fun restartCurrentRound() {
-        roundTimer.restartCurrentRound()
+        timerHandler.restartCurrentRound()
     }
 
     fun setInfiniteLoop(isInfiniteLoop: Boolean) {
-        roundTimer.infiniteLoops = isInfiniteLoop
-    }
-
-    fun setActiveRound(dataRound: RnRound) {
-        roundScreen.timerDisplay.activeRound = dataRound
+        timerHandler.infiniteLoops = isInfiniteLoop
     }
 
     fun skipRound() {
-        roundTimer.skip()
+        timerHandler.skip()
+    }
+
+    fun pauseTimer() {
+        timerHandler.pause()
     }
 }

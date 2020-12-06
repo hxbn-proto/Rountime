@@ -1,61 +1,83 @@
 package com.hxbnproto.rountime
 
+import com.hxbnproto.action.ActionTimer
+import javafx.scene.Node
 import javafx.scene.paint.Color
 import java.time.Duration
 
 class RnRound {
 
-    var onChanged: ((round: RnRound) -> Unit)? = null
-    var onTick: ((round: RnRound) -> Unit)? = null
-    var onStart: (() -> Unit)? = null
-    var onFinish: (() -> Unit)? = null
+    private val actionTimer = ActionTimer()
+    private val bell = Bell
+    private var executionResult: Boolean = false
+
+    var element: Node? = null
 
     var alarmIsOn: Boolean = true
         set(newVal) {
             field = newVal
             onChanged?.invoke(this)
         }
-
     var description: String = ""
         set(newVal) {
             field = newVal
             onChanged?.invoke(this)
         }
-
     var color: Color = Color.color(Math.random(), Math.random(), Math.random())
         set(newVal) {
             field = newVal
             onChanged?.invoke(this)
         }
 
-    var duration: Duration = Duration.ZERO
+    var onChanged: ((round: RnRound) -> Unit)? = null
+
+    var onTick: ((round: RnRound) -> Unit)? = null
         set(newVal) {
             field = newVal
-            onChanged?.invoke(this)
+            actionTimer.onTick = { onTick?.invoke(this) }
         }
-    private var bell: Bell = Bell()
-    private var tickingDuration: Duration? = null
+    var onStart: ((round: RnRound) -> Unit)? = null
+        set(newVal) {
+            field = newVal
 
-    fun go(): Boolean {
-
-        tickingDuration = duration.abs()
-        onStart?.invoke()
-        while (tickingDuration!!.seconds >= 0) {
-
-            onTick?.invoke(this)
-            tickingDuration = tickingDuration!!.minusSeconds(1)
-
-            try {
-                Thread.sleep(1000)
-            } catch (stoppingException: InterruptedException) {
-                throw stoppingException
+            actionTimer.onStart = {
+                executionResult = false
+                onStart?.invoke(this)
             }
         }
-        if (alarmIsOn) {
-            bell.ring()
+    var onFinish: ((round: RnRound) -> Unit)? = null
+        set(newVal) {
+            field = newVal
+
+            actionTimer.onComplete = {
+                executionResult = true
+                if (alarmIsOn) {
+                    bell.ring()
+                }
+                onFinish?.invoke(this)
+            }
         }
-        onFinish?.invoke()
-        return true
+
+    var duration: Duration
+        set(newVal) {
+            actionTimer.duration = newVal
+            onChanged?.invoke(this)
+        }
+        get() = actionTimer.duration
+
+    //private var tickingDuration: Duration? = null
+
+    fun go(): Boolean {
+        actionTimer.start()
+        return executionResult
+    }
+
+    fun pause() {
+        actionTimer.pause()
+    }
+
+    fun stop() {
+        actionTimer.stop()
     }
 
     private fun addSeconds(seconds: Int) {
@@ -75,7 +97,7 @@ class RnRound {
     }
 
     fun getFormattedTickingDuration(): String {
-        return formatDuration(tickingDuration!!)
+        return formatDuration(actionTimer.runningDuration ?: duration)
     }
 
     fun resetDuration() {

@@ -8,7 +8,7 @@ import javafx.stage.Stage
 import tornadofx.App
 import tornadofx.launch
 
-class Rountime : App(RoundScreen::class, Styles::class) {
+class RountimeApp : App(RoundScreen::class, Styles::class) {
     private val roundScreenController: RoundScreenController by inject()
 
     override fun start(stage: Stage) {
@@ -20,5 +20,5 @@ class Rountime : App(RoundScreen::class, Styles::class) {
 }
 
 fun main(args: Array<String>) {
-    launch<Rountime>(args)
+    launch<RountimeApp>(args)
 }

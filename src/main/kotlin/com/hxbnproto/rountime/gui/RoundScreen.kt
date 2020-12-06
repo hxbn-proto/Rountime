@@ -3,7 +3,6 @@ package com.hxbnproto.rountime.gui
 import com.hxbnproto.rountime.RnRound
 import com.hxbnproto.rountime.TimeTextField
 import com.hxbnproto.rountime.formatDuration
-// import com.hxbnproto.rountime.gui.Styles.Companion.roundScreen
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXRadioButton
 import com.jfoenix.controls.JFXToggleNode
@@ -26,6 +25,7 @@ import javafx.scene.paint.Paint
 import javafx.scene.text.Font
 import javafx.scene.text.FontPosture
 import javafx.scene.text.FontWeight
+import javafx.scene.text.Text
 import kfoenix.jfxbutton
 import kfoenix.jfxcolorpicker
 import kfoenix.jfxradiobutton
@@ -36,7 +36,7 @@ class RoundScreen : View("RounTime") {
 
     private val roundScreenController: RoundScreenController by inject()
     private val roundButtonGroup = ToggleGroup()
-    lateinit var timerDisplay: TimerDisplay
+    val timerDisplay: TimerDisplay
 
     override val root = vbox {
 
@@ -50,6 +50,7 @@ class RoundScreen : View("RounTime") {
         }
 
         stackpane {
+            id = "coloredBackground"
             background =
                 Background(BackgroundFill(Paint.valueOf("white"), CornerRadii.EMPTY, Insets.EMPTY))
             border = Border(
@@ -61,26 +62,24 @@ class RoundScreen : View("RounTime") {
                 )
             )
 
-            pane {
-                id = "coloredBackground"
-                opacity = 0.2
-            }
-
             // Display
             vbox {
                 alignment = Pos.BASELINE_CENTER
                 padding = Insets(0.0, 0.0, 20.0, 0.0)
 
                 label {
-                    id = "timeCounter"
-                    font = Font.font("arial", FontWeight.BOLD, 50.0)
                     spacing = 25.0
+                    graphic = text {
+                        id = "timeCounter"
+                        font = Font.font("arial", FontWeight.BOLD, 50.0)
+                    }
                 }
-
                 label {
-                    id = "roundTitle"
-                    font = Font.font("arial", FontWeight.BOLD, 24.0)
-                    spacing = 15.0
+                    spacing = 25.0
+                    graphic = text {
+                        id = "roundTitle"
+                        font = Font.font("arial", FontWeight.BOLD, 24.0)
+                    }
                 }
 
                 hbox {
@@ -188,14 +187,11 @@ class RoundScreen : View("RounTime") {
 
                 action {
                     if (roundButtonGroup.selectedToggle != null) {
-                        val dataArray = roundButtonGroup.selectedToggle.userData as Array<*>
-
-                        roundScreenController.deleteRound(dataArray[0] as Node, dataArray[1] as RnRound)
+                        roundScreenController.deleteRound(getSelectedRound()!!)
 
                         if (getRoundElements()!!.size > 0) {
                             // Toggle radio button of first element if present
                             selectFirstRoundElement()
-                            timerDisplay.roundRemoved(dataArray[1] as RnRound)
                         }
                     }
                 }
@@ -221,14 +217,10 @@ class RoundScreen : View("RounTime") {
                         .build()
                 )
                 action {
-                    val data = roundButtonGroup.selectedToggle?.userData
-                    val round = (data as? Array<*>)?.get(1)
-
-                    roundScreenController.startTimer(round as? RnRound?)
+                    roundScreenController.startTimer()
                 }
             }
-            // TODO: pause timer
-            /*jfxbutton {
+            jfxbutton {
                 style {
                     buttonType = JFXButton.ButtonType.FLAT
                     textFill = Color.WHITE
@@ -248,9 +240,9 @@ class RoundScreen : View("RounTime") {
                         .build()
                 )
                 action {
-                    //roundScreenController.pauseTimer()
+                    roundScreenController.pauseTimer()
                 }
-            }*/
+            }
             jfxbutton {
                 style {
                     buttonType = JFXButton.ButtonType.FLAT
@@ -343,9 +335,9 @@ class RoundScreen : View("RounTime") {
 
         timerDisplay = TimerDisplay(
             root.lookup("#coloredBackground") as Pane,
-            root.lookup("#timeCounter") as Label,
-            root.lookup("#roundTitle") as Label
-            /* todo: spinner
+            root.lookup("#timeCounter") as Text,
+            root.lookup("#roundTitle") as Text
+            /* TODO(soon): spinner
             root.lookup("#roundTitle") as JFXSpinner*/
         )
         runLater { root.requestFocus() }
@@ -361,8 +353,12 @@ class RoundScreen : View("RounTime") {
         radio.onAction.handle(ActionEvent())
     }
 
+    fun getSelectedRound(): RnRound? {
+        return roundButtonGroup.selectedToggle?.userData as RnRound
+    }
+
     fun deleteAllRoundElements() {
-        getRoundElements()!!.clear()
+        getRoundElements()?.clear()
     }
 
     fun addRoundElement(roundElement: Node) {
@@ -379,7 +375,7 @@ class RoundScreen : View("RounTime") {
 
     fun constructElementForRound(round: RnRound): Node {
 
-        return hbox {
+        val element = hbox {
             prefWidth = 362.0
             spacing = 5.0
             padding = Insets(3.0, 5.0, 3.0, 5.0)
@@ -407,18 +403,16 @@ class RoundScreen : View("RounTime") {
                 toggleGroup = roundButtonGroup
                 minWidth = 120.0
                 text = round.description
-                userData = arrayOf(parent, round)
+                userData = round
                 onAction = EventHandler {
-                    val dataRound = (userData as Array<*>)[1] as RnRound
-
-                    roundScreenController.setActiveRound(dataRound)
-                    roundScreenController.print(dataRound)
+                    roundScreenController.show(round)
                 }
             }
 
             val timeField = TimeTextField()
             timeField.maxWidth = 100.0
             timeField.userData = round
+            timeField.text = formatDuration(round.duration)
             timeField.textProperty()
                 .addListener { _, _, _ ->
                     round.duration = timeField.duration
@@ -474,6 +468,9 @@ class RoundScreen : View("RounTime") {
                 action { roundScreenController.duplicateRound(round) }
             }
         }
+
+        round.element = element
+        return element
     }
 
     fun updateGlobalDuration(duration: Duration) {
